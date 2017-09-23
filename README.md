@@ -27,7 +27,7 @@ found.
   The exception is if the
   user declares the return type as PyObject*, then it is
   up the user to provide the return value.
-- Scalars inputs are translated directly to c types, including
+- Scalar inputs are translated directly to c types. This includes
   strings, but only as const char *.
 - Pointer inputs are assumed to represent numpy arrays, and the
   underlying pointer is extracted using PyArray_DATA.  It is
