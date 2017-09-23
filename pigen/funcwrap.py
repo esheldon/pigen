@@ -8,7 +8,7 @@ class FuncWrapper(dict):
     api wrapper code for it
     """
     def __init__(self, funcdef, prefix):
-        self._prefix=prefix
+        self['prefix']=prefix
         self._funcdef=funcdef
 
         self._set_defs()
@@ -73,7 +73,7 @@ class FuncWrapper(dict):
         fs=self._funcdef.replace(';','').replace(')','')
 
         front,back = fs.split('(')
-        self._funcdef = FuncDef(front)
+        self._funcdef = FuncDef(front, self['prefix'])
 
         back=back.strip()
         if back=='void' or back=='':
@@ -81,7 +81,7 @@ class FuncWrapper(dict):
         else:
 
             arglist=[a.strip() for a in back.split(',')]
-            self._args = Arguments(arglist)
+            self._args = Arguments(arglist, self['prefix'])
 
     def _set_parse_tuple_call(self):
         """
@@ -97,8 +97,8 @@ class FuncWrapper(dict):
         Set the wrapper function definition
         """
         self._wrapper_funcdef = _wrapper_funcdef_template % dict(
-            prefix=self._prefix,
-            func_name=self._funcdef['func_name'],
+            prefix=self['prefix'],
+            func_wrapper_name=self._funcdef['func_wrapper_name'],
         )
 
     def _set_function_call(self):
@@ -128,11 +128,12 @@ class FuncDef(dict):
     """
     extract information about the wrapped function
     """
-    def __init__(self, front):
+    def __init__(self, front, prefix):
         if '*' in front and 'PyObject' not in front:
             raise RuntimeError("pointer return not supported, except PyObject*")
 
         self['return_type'], self['func_name'] = get_type_and_name(front)
+        self['func_wrapper_name'] = '%s_%s' % (prefix, self['func_name'])
 
         self._set_return_var()
         self._set_return_call()
@@ -145,7 +146,7 @@ class FuncDef(dict):
             self['return_var_name']=None
             self['return_def']=None
         else:
-            self['return_var_name']='%s_retval' % self['func_name']
+            self['return_var_name']='%s_retval' % self['func_wrapper_name']
             self['return_def'] = '    %s %s;' % \
                     (self['return_type'], self['return_var_name'])
 
@@ -166,9 +167,12 @@ class Argument(dict):
     """
     Get information for wrapping a function argument
     """
-    def __init__(self, argdef):
+    def __init__(self, argdef, prefix):
         self._argdef=argdef
-        self['type'], self['name'] = get_type_and_name(argdef)
+        self['prefix'] = prefix
+        self['type'], name = get_type_and_name(argdef)
+
+        self['name'] = '%s_%s' % (prefix, name)
 
         self._set_wrapper_info()
         self._set_unwrap_code()
@@ -226,10 +230,11 @@ class Arguments(dict):
     """
     information for wrapping function arguments
     """
-    def __init__(self, arglist):
+    def __init__(self, arglist, prefix):
         self._arglist=arglist
+        self['prefix']=prefix
 
-        self._args = [Argument(a) for a in arglist]
+        self._args = [Argument(a,prefix) for a in arglist]
 
         self._set_pytype_string()
         self._set_unwraps()
@@ -326,7 +331,7 @@ def get_wrap_type(type):
 
 
 
-_wrapper_funcdef_template='PyObject* %(prefix)s_%(func_name)s(PyObject* self, PyObject* args)'
+_wrapper_funcdef_template='PyObject* %(func_wrapper_name)s(PyObject* self, PyObject* args)'
 
 
 _parse_tuple_template="""
