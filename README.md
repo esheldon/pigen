@@ -4,10 +4,10 @@ Extremely simple python interface generator for C code
 Motivation
 ----------
 
-Provide a very simple way to interfact with C code.  The goal here is to
+Provide a very simple way to interface with C code.  The goal here is to
 improve performance and keep this wrapper code simple and easy.  The goal is
-not to wrap existing code of any kind, but rather to wrap C code written
-specifically to by easy to wrap.
+not to wrap existing code of all kinds, but rather to wrap C code carefully
+crafted to be easy to wrap.
 
 Principles
 ----------
@@ -20,7 +20,7 @@ These principles are designed to keep this code simple.
   of Py_BuildValue for scalar return values.
 - return values can only be scalars or None (void).  If the
   return value were a pointer, it would imply some kind
-  of memory allocation. If you multiple return values are needed,
+  of memory allocation. If multiple return values are needed,
   send an array(s) and fill them.
 - scalars inputs are translated directly to c types.
 - pointer inputs are assumed to represent numpy arrays, and the
