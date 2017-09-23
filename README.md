@@ -75,14 +75,16 @@ functions:
   - |
       void fill_fdiff(struct gauss* gmix,
                       long n_gauss,
-                      double *fdiff, long n)
+                      double *fdiff,
+                      long n)
 
   # multiline within dict
   - def: |
       PyObject* fpyobj(PyObject* input1,
                        PyObject* input2)
     doc: |
-      All PyObjects*. User is responsible for everything
+      All types are declared as PyObjects*. The user is responsible
+      for using the python api.
 ```
 TODO
 -------
