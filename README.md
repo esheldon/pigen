@@ -48,9 +48,11 @@ includes:
   - gmix.h
   - point.h
 
-# either a string with the def, for dict with 'def' and possibly
-# a 'doc' entry
-# semicolons are ignored
+# either a string with the prototype, or a dict with
+# the prototype in the 'def' entry, and possibly a 'doc' entry
+# for documentation
+# semicolons are ignored in prototypes
+
 functions:
   - def: void noargs_or_return(void)
     doc: no args or return value
