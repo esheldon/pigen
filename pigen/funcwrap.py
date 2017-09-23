@@ -1,5 +1,3 @@
-import random
-
 class FuncWrapper(dict):
     """
     function definition wrapper
