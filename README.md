@@ -32,7 +32,7 @@ be lifted if an easy way to implement it is found.
   underlying pointer is extracted using PyArray_DATA.  It is
   checked that the input is a numpy array.
 - For array arguments, it is the responsibility of the user to provide the correct
-  inputs, no array type checking is performed.
+  input type and shape, no array type or shape checking is performed.
 - String arrays are not provided translation because they are ambiguous
   with ordinary strings.  If string arrays are needed, have your
   function take a PyObject* as an argument and do the PyArray
