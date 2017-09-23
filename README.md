@@ -38,6 +38,50 @@ be lifted if an easy way to implement it is found.
   function take a PyObject* as an argument and do the PyArray
   calls yourself
 
+Example definition file
+-----------------------
+
+```yaml
+modulename: '_gmix'
+
+includes: [
+    '#include "gmix.h"',
+    '#include "point.h"',
+]
+
+# either a string with the def, for dict with 'def' and possibly
+# a 'doc' entry
+# semicolons are ignored
+functions:
+    - def: void noargs_or_return(void)
+      doc: no args or return value
+
+    - def: int noargs()
+      doc: no args, int return
+
+
+    - def: double dsum(double * y, size_t ny)
+      doc: func returns double, takes array and array size
+
+    # can leave out docs if you want
+    - def: double dscalar(void)
+
+    # if there is no doc, you don't need a dict
+    - float fscalar(float x);
+
+    # multiline
+    - |
+        void fill_fdiff(struct gauss* gmix,
+                        long n_gauss,
+                        double *fdiff, long n)
+
+    # multiline within dict
+    - def: |
+        PyObject* fpyobj(PyObject* input1,
+                         PyObject* input2)
+      doc: |
+        All PyObjects*. User is responsible for everything
+```
 TODO
 -------
 - support strings char * using const char * as the type
