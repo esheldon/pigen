@@ -42,10 +42,6 @@ init%(modulename)s(void)
 {
     PyObject* m=NULL;
 
-    PyGMixNormalType.tp_new = PyType_GenericNew;
-    PyGMixNormal2DType.tp_new = PyType_GenericNew;
-    PyGMixZDisk2DType.tp_new = PyType_GenericNew;
-
 #if PY_MAJOR_VERSION >= 3
 
     m = PyModule_Create(&moduledef);
