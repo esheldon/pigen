@@ -42,6 +42,8 @@ class FuncWrapper(dict):
         if args is not None:
             if args['wrap_declarations'] is not None:
                 text_list += ['',args['wrap_declarations']]
+            if args['declarations'] is not None:
+                text_list += ['',args['declarations']]
 
         if self._parse_tuple_call is not None:
             text_list += [
@@ -211,8 +213,16 @@ class Argument(dict):
 
         self['parse_tuple_arg'] = '&%s' % self['wrap_name']
 
-        tup=(self['parse_tuple_argtype'], self['wrap_name'])
-        self['wrap_declaration'] = '    %s %s;' % tup
+
+        tup=(self['wrapper_type'],self['name'])
+        self['declaration'] = '    %s %s;' % tup
+
+        if self._do_unwrap:
+            tup=(self['parse_tuple_argtype'], self['wrap_name'])
+            self['wrap_declaration'] = '    %s %s;' % tup
+
+        else:
+            self['wrap_declaration'] = None
 
     def _set_unwrap_code(self):
         """
@@ -239,6 +249,7 @@ class Arguments(dict):
         self._set_pytype_string()
         self._set_unwraps()
         self._set_wrap_declarations()
+        self._set_declarations()
         self._set_parse_tuple_args()
         self._set_function_args()
 
@@ -263,8 +274,25 @@ class Arguments(dict):
         """
         combined wrap declarations
         """
-        dlist=[a['wrap_declaration'] for a in self._args]
-        self['wrap_declarations'] = '\n'.join(dlist)
+        dlist=[a['wrap_declaration'] for a in self._args
+               if a['wrap_declaration'] is not None]
+
+        if len(dlist) > 0:
+            self['wrap_declarations'] = '\n'.join(dlist)
+        else:
+            self['wrap_declarations'] = None
+
+    def _set_declarations(self):
+        """
+        combined wrap declarations
+        """
+        dlist=[a['declaration'] for a in self._args
+               if a['declaration'] is not None]
+        if len(dlist) == 0:
+            self['declarations'] = None
+        else:
+            self['declarations'] = '\n'.join(dlist)
+
 
     def _set_parse_tuple_args(self):
         """
