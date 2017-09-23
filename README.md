@@ -48,9 +48,8 @@ includes:
   - gmix.h
   - point.h
 
-# either a string with the prototype, or a dict with
-# the prototype in the 'def' entry, and possibly a 'doc' entry
-# for documentation
+# function defs are either a string with the prototype, or a dict with the
+# prototype in the 'def' entry, and possibly a 'doc' entry for documentation.
 # semicolons are ignored in prototypes
 
 functions:
@@ -60,15 +59,17 @@ functions:
   - def: int noargs()
     doc: no args, int return
 
-
   - def: double dsum(double * y, size_t ny)
     doc: func returns double, takes array and array size
 
-  # can leave out docs if you want
+
+  # docs are optional
   - def: double dscalar(void)
 
-  # if there is no doc, you don't need a dict
+
+  # if there is no doc, a simple string can be used
   - float fscalar(float x);
+
 
   # multiline
   - |
