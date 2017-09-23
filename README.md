@@ -22,13 +22,14 @@ These principles are designed to keep this code simple.
   return value were a pointer, it would imply some kind
   of memory allocation. If multiple return values are needed,
   send an array(s) and fill them.
-- scalars inputs are translated directly to c types.
-- pointer inputs are assumed to represent numpy arrays, and the
-  underlying pointer is extracted useing PyArray_DATA.  It is
+- Scalars inputs are translated directly to c types, including
+  strings, but only as const char *.
+- Pointer inputs are assumed to represent numpy arrays, and the
+  underlying pointer is extracted using PyArray_DATA.  It is
   checked that the input is a numpy array.
 - For array arguments, it is the responsibility of the user to provide the correct
   inputs, no array type checking is performed.
-- string arrays are provided translate because they are ambiguous
+- String arrays are not provided translation because they are ambiguous
   with ordinary strings.  If string arrays are needed, have your
   function take a PyObject* as an argument and do the PyArray
   calls yourself
