@@ -4,15 +4,16 @@ Extremely simple python interface generator for C code
 Motivation
 ----------
 
-Provide a very simple way to interface with C code.  The goal here is to
-improve performance and keep this wrapper code simple and easy.  The goal is
-not to wrap existing code of all kinds, but rather to wrap C code carefully
-crafted to be easy to wrap.
+Provide a very simple way to interface with C code.  The goal is to improve
+performance while keeping this code simple and easy to understand.  It is not a
+goal to wrap existing code of all kinds, but rather code carefully crafted to
+be easy to wrap.
 
 Principles
 ----------
 
-These principles are designed to keep this code simple.
+These principles are designed to keep this code simple.  Some restrictions may
+be lifted if an easy way to implement it is found.
 
 - Each function wrapper is only that: a wrapper.  Its only 
   purpose is to provide inputs to the wrapped function.
