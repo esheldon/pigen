@@ -12,8 +12,9 @@ of all kinds, but rather code crafted to be easy to wrap.
 Principles
 ----------
 
-These principles are designed to keep this code simple.  Some restrictions may
-be lifted if an easy way to implement a particular case is found.
+Some principles are followed in order to keep this code simple.  Some
+restrictions may be lifted if an easy way to implement a particular case is
+found.
 
 - Each function wrapper is only that: a wrapper.  Its only 
   purpose is to provide inputs to the wrapped function.
