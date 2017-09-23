@@ -6,6 +6,7 @@ class FuncWrapper(dict):
     api wrapper code for it
     """
     def __init__(self, funcdef, prefix):
+        raise RuntimeError("move over to config")
         self._prefix=prefix
         self._funcdef=funcdef
 
@@ -386,7 +387,8 @@ _pytype_map={
 
 
 def test():
-    prefix='PyGMix'
+    modulename='_gmix'
+    # prefix will be 'Py_%s' % modulename
     defs = [
         'void noarg_or_return(void)',
         'int noarg()',

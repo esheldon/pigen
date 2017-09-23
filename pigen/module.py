@@ -6,9 +6,9 @@ _template="""
 
 %(includes)s
 
-%(functions)s
+%(all_functions)s
 
-static PyMethodDef %(py_method_def_name)s[] = {
+static PyMethodDef %(modulename)s_py_method_defs [] = {
 
 %(py_method_defs)s
 
@@ -22,7 +22,7 @@ static PyMethodDef %(py_method_def_name)s[] = {
         "%(modulename)s",      /* m_name */
         "Defines the funcs associated with module",  /* m_doc */
         -1,                  /* m_size */
-        %(py_method_def_name)s, /* m_methods */
+        %(modulename)s_py_method_defs, /* m_methods */
         NULL,                /* m_reload */
         NULL,                /* m_traverse */
         NULL,                /* m_clear */
@@ -51,7 +51,7 @@ init%(modulename)s(void)
 
 #else
 
-    m = Py_InitModule3("%(modulename)s", %(py_method_def_name)s, "Define funcs.");
+    m = Py_InitModule3("%(modulename)s", %(modulename)s_py_method_defs, "Define funcs.");
     if (m==NULL) {
         return;
     }
