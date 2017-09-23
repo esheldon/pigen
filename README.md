@@ -22,7 +22,9 @@ be lifted if an easy way to implement it is found.
 - return values can only be scalars or None (void).  If the
   return value were a pointer, it would imply some kind
   of memory allocation. If multiple return values are needed,
-  send an array(s) and fill them.
+  send an array(s) and fill them.  The exception is if the
+  user declares the return type as PyObject*, then it is
+  up the user to provide the return value.
 - Scalars inputs are translated directly to c types, including
   strings, but only as const char *.
 - Pointer inputs are assumed to represent numpy arrays, and the
