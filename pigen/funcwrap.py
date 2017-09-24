@@ -1,4 +1,5 @@
 from __future__ import print_function, absolute_import
+from . import files
 
 class FuncWrapper(dict):
     """
@@ -7,12 +8,13 @@ class FuncWrapper(dict):
     date a C function declaration and generate the python C 
     api wrapper code for it
     """
-    def __init__(self, funcdef, prefix):
-        self['prefix']=prefix
+    def __init__(self, funcdef, prefix, prefix_var_names=False):
+
         self._funcdef=funcdef
+        self._prefix=prefix
+        self._prefix_var_names=prefix_var_names
 
         self._set_defs()
-        self._set_wrapper_funcdef()
         self._set_parse_tuple_call()
         self._set_function_call()
 
@@ -32,7 +34,7 @@ class FuncWrapper(dict):
         funcdef = self._funcdef
 
         text_list=[
-            self._wrapper_funcdef,
+            self._funcdef['wrapper_funcdef'],
             '{',
         ]
 
@@ -75,7 +77,11 @@ class FuncWrapper(dict):
         fs=self._funcdef.replace(';','').replace(')','')
 
         front,back = fs.split('(')
-        self._funcdef = FuncDef(front, self['prefix'])
+        self._funcdef = FuncDef(front, self._prefix)
+        if self._prefix_var_names:
+            var_prefix=self._funcdef['func_wrapper_name']
+        else:
+            var_prefix=None
 
         back=back.strip()
         if back=='void' or back=='':
@@ -83,7 +89,10 @@ class FuncWrapper(dict):
         else:
 
             arglist=[a.strip() for a in back.split(',')]
-            self._args = Arguments(arglist, self['prefix'])
+            self._args = Arguments(
+                arglist,
+                prefix=var_prefix,
+            )
 
     def _set_parse_tuple_call(self):
         """
@@ -136,6 +145,8 @@ class FuncDef(dict):
 
         self['return_type'], self['func_name'] = get_type_and_name(front)
         self['func_wrapper_name'] = '%s_%s' % (prefix, self['func_name'])
+        self['wrapper_funcdef'] = _wrapper_funcdef_template % self
+
 
         self._set_return_var()
         self._set_return_call()
@@ -165,82 +176,11 @@ class FuncDef(dict):
             self['return_call']='    return Py_BuildValue("%s", %s);' % \
                     (pytype, self['return_var_name'])
  
-class Argument(dict):
-    """
-    Get information for wrapping a function argument
-    """
-    def __init__(self, argdef, prefix):
-        self._argdef=argdef
-        self['prefix'] = prefix
-        self['type'], name = get_type_and_name(argdef)
-
-        self['name'] = '%s_%s' % (prefix, name)
-
-        self._set_wrapper_info()
-        self._set_unwrap_code()
-
-    def _set_wrapper_info(self):
-        """
-        set the basic wrapper info
-        """
-        if 'PyObject' in self['type']:
-
-            self['parse_tuple_argtype'] = 'PyObject*'
-
-            self['wrap_name'] = self['name']
-            self['wrapper_type'] = 'PyObject*'
-
-            self['pytype'] = 'O'
-            self._do_unwrap=False
-
-        elif '*' in self['type']:
-            self['parse_tuple_argtype'] = 'PyObject*'
-
-            self['wrap_name'] = '%s_wrap' % self['name']
-            self['wrapper_type'] = self['type']
-
-            self['pytype'] = 'O'
-            self._do_unwrap=True
-
-        else:
-            self['parse_tuple_argtype'] = get_wrap_type(self['type'])
-
-            self['wrap_name'] = self['name']
-            self['wrapper_type'] = self['parse_tuple_argtype']
-
-            self['pytype'] = get_pytype(self['wrapper_type'])
-            self._do_unwrap=False
-
-        self['parse_tuple_arg'] = '&%s' % self['wrap_name']
-
-
-        tup=(self['wrapper_type'],self['name'])
-        self['declaration'] = '    %s %s;' % tup
-
-        if self._do_unwrap:
-            tup=(self['parse_tuple_argtype'], self['wrap_name'])
-            self['wrap_declaration'] = '    %s %s;' % tup
-
-        else:
-            self['wrap_declaration'] = None
-
-    def _set_unwrap_code(self):
-        """
-        set the unwrap code, if needed
-        """
-        if self._do_unwrap:
-            c='    %(name)s = (%(type)s) PyArray_DATA( (PyArrayObject*) %(wrap_name)s );'
-            c = c % self
-        else:
-            c=None
-
-        self['unwrap_code'] = c
-
 class Arguments(dict):
     """
     information for wrapping function arguments
     """
-    def __init__(self, arglist, prefix):
+    def __init__(self, arglist, prefix=None):
         self._arglist=arglist
         self['prefix']=prefix
 
@@ -307,6 +247,81 @@ class Arguments(dict):
         """
         args=[a['name'] for a in self._args]
         self['function_args'] = ', '.join(args)
+
+class Argument(dict):
+    """
+    Get information for wrapping a function argument
+    """
+    def __init__(self, argdef, prefix=None):
+        self._argdef=argdef
+        self['prefix'] = prefix
+        self['type'], name = get_type_and_name(argdef)
+
+        if self['prefix'] is not None:
+            self['name'] = '%s_%s' % (prefix, name)
+        else:
+            self['name'] = name
+
+        self._set_wrapper_info()
+        self._set_unwrap_code()
+
+    def _set_wrapper_info(self):
+        """
+        set the basic wrapper info
+        """
+        if 'PyObject' in self['type']:
+
+            self['parse_tuple_argtype'] = 'PyObject*'
+
+            self['wrap_name'] = self['name']
+            self['wrapper_type'] = 'PyObject*'
+
+            self['pytype'] = 'O'
+            self._do_unwrap=False
+
+        elif '*' in self['type']:
+            self['parse_tuple_argtype'] = 'PyObject*'
+
+            self['wrap_name'] = '%s_wrap' % self['name']
+            self['wrapper_type'] = self['type']
+
+            self['pytype'] = 'O'
+            self._do_unwrap=True
+
+        else:
+            self['parse_tuple_argtype'] = get_wrap_type(self['type'])
+
+            self['wrap_name'] = self['name']
+            self['wrapper_type'] = self['parse_tuple_argtype']
+
+            self['pytype'] = get_pytype(self['wrapper_type'])
+            self._do_unwrap=False
+
+        self['parse_tuple_arg'] = '&%s' % self['wrap_name']
+
+
+        tup=(self['wrapper_type'],self['name'])
+        self['declaration'] = '    %s %s;' % tup
+
+        if self._do_unwrap:
+            tup=(self['parse_tuple_argtype'], self['wrap_name'])
+            self['wrap_declaration'] = '    %s %s;' % tup
+
+        else:
+            self['wrap_declaration'] = None
+
+    def _set_unwrap_code(self):
+        """
+        set the unwrap code, if needed
+        """
+        if self._do_unwrap:
+            c='    %(name)s = (%(type)s) PyArray_DATA( (PyArrayObject*) %(wrap_name)s );'
+            c = c % self
+        else:
+            c=None
+
+        self['unwrap_code'] = c
+
 
 
 def get_type_and_name(d):
@@ -421,23 +436,31 @@ _pytype_map={
 
 
 def test():
-    modulename='_gmix'
-    prefix='Py%s' % modulename
-    # prefix will be 'Py_%s' % modulename
-    defs = [
-        'void noarg_or_return(void)',
-        'int noarg()',
-        'float scalar(float x);',
-        'double fdouble(double * y, size_t ny);',
-        'void fill_fdiff(struct gauss* gmix, long n_gauss, double *fdiff, long n_fdiff);',
-        'PyObject* fpyobj(PyObject* input1, PyObject* input2);',
-    ]
+    conf={
+        'modulename': '_gmix',
 
-    for d in defs:
+        'functions': [
+            'void noarg_or_return(void)',
+            'int noarg()',
+            'float scalar(float x);',
+            'double fdouble(double * y, size_t ny);',
+            'void fill_fdiff(struct gauss* gmix, long n_gauss, double *fdiff, long n_fdiff);',
+            'PyObject* fpyobj(PyObject* input1, PyObject* input2);',
+        ]
+    }
+
+    conf=files.load_config(conf)
+
+    for d in conf['functions']:
         print('// ' + '-'*70)
         print()
 
-        wrapper=FuncWrapper(d, prefix)
+
+        wrapper=FuncWrapper(
+            funcdef=d,
+            prefix=conf['wrapper_prefix'],
+            prefix_var_names=conf['prefix_var_names'],
+        )
         print(wrapper)
         print()
 
