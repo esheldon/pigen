@@ -433,37 +433,3 @@ _pytype_map={
     'long long':'L',
     'unsigned long long':'K',
 }    
-
-
-def test():
-    conf={
-        'modulename': '_gmix',
-
-        'functions': [
-            'void noarg_or_return(void)',
-            'int noarg()',
-            'float scalar(float x);',
-            'double fdouble(double * y, size_t ny);',
-            'void fill_fdiff(struct gauss* gmix, long n_gauss, double *fdiff, long n_fdiff);',
-            'PyObject* fpyobj(PyObject* input1, PyObject* input2);',
-        ]
-    }
-
-    conf=files.load_config(conf)
-
-    for d in conf['functions']:
-        print('// ' + '-'*70)
-        print()
-
-
-        wrapper=FuncWrapper(
-            funcdef=d,
-            prefix=conf['wrapper_prefix'],
-            prefix_var_names=conf['prefix_var_names'],
-        )
-        print(wrapper)
-        print()
-
-
-if __name__=="__main__":
-    test()

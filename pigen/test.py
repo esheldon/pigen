@@ -1,5 +1,5 @@
 from __future__ import print_function, absolute_import
-from . import files
+from . import config
 from . import funcwrap
 
 def test(prefix_var_names=False):
@@ -17,7 +17,7 @@ def test(prefix_var_names=False):
         ]
     }
 
-    conf=files.load_config(conf)
+    conf=config.load_config(conf)
 
     for d in conf['functions']:
         print('// ' + '-'*70)
