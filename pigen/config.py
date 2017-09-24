@@ -3,14 +3,17 @@ _config_defaults = dict(
     prefix_var_names=False,
 )
 
-def load_yaml(fname):
-    import yaml
-    with open(fname) as fobj:
-        data=yaml.load(fobj)
-    return data
-
 def load_config(fname):
+    """
+    load a config, setting default parameters
 
+    parameters
+    ----------
+    fname: string or dict
+        Either a dict representing a config or a filename
+
+        In either case set default values
+    """
     if isinstance(fname,dict):
         data=fname
     else:
@@ -25,4 +28,14 @@ def load_config(fname):
                 (conf['prefix'], conf['modulename'])
 
     return conf
+
+def load_yaml(fname):
+    """
+    load some data from a yaml file
+    """
+    import yaml
+    with open(fname) as fobj:
+        data=yaml.load(fobj)
+    return data
+
 
