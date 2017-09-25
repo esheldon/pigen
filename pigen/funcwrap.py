@@ -1,5 +1,4 @@
 from __future__ import print_function, absolute_import
-from . import files
 
 class FuncWrapper(dict):
     """
@@ -10,11 +9,12 @@ class FuncWrapper(dict):
     """
     def __init__(self, funcdef, prefix, prefix_var_names=False):
 
-        self._funcdef=funcdef
+        self._set_funcdef(funcdef)
         self._prefix=prefix
         self._prefix_var_names=prefix_var_names
 
         self._set_defs()
+        self._set_py_method_def()
         self._set_parse_tuple_call()
         self._set_function_call()
 
@@ -26,20 +26,36 @@ class FuncWrapper(dict):
         """
         return self._text
 
+    def get_py_method_def(self):
+        """
+        Get the text of the wrapper function definition
+        """
+        return self['py_method_def']
+
+
+    def _set_funcdef(self, funcdef):
+        if isinstance(funcdef, dict):
+            self['prototype']=funcdef['def']
+            self['doc'] = funcdef['doc']
+        else:
+            self['prototype']=funcdef
+            self['doc'] = "no doc"
+
+        self['prototype'] = self['prototype'].replace(';','')
+
     def _combine(self):
         """
         combine all the pieces into the wrapper function definition
         """
         args=self._args
-        funcdef = self._funcdef
 
         text_list=[
-            self._funcdef['wrapper_funcdef'],
+            self['wrapper_funcdef'],
             '{',
         ]
 
-        if funcdef['return_def'] is not None:
-            text_list += ['',funcdef['return_def']]
+        if self['return_def'] is not None:
+            text_list += ['',self['return_def']]
 
         if args is not None:
             if args['wrap_declarations'] is not None:
@@ -62,7 +78,7 @@ class FuncWrapper(dict):
             '',
             self._function_call,
             '',
-            funcdef['return_call'],
+            self['return_call'],
             '',
             '}',
         ]
@@ -74,12 +90,19 @@ class FuncWrapper(dict):
         """
         set the argument defs, return type def, function defs
         """
-        fs=self._funcdef.replace(';','').replace(')','')
 
-        front,back = fs.split('(')
-        self._funcdef = FuncDef(front, self._prefix)
+        # split into "type funcname" and "args)
+        front,back = self['prototype'].replace(')','').split('(')
+
+        # determine return type, and details of the overall
+        # function wrapping. args are treated separately below
+
+        func_wrap_return = FuncWrapAndReturn(front, self._prefix)
+        self.update(func_wrap_return)
+
+        # wrapping arguments to the user function
         if self._prefix_var_names:
-            var_prefix=self._funcdef['func_wrapper_name']
+            var_prefix=self['func_wrapper_name']
         else:
             var_prefix=None
 
@@ -94,6 +117,18 @@ class FuncWrapper(dict):
                 prefix=var_prefix,
             )
 
+    def _set_py_method_def(self):
+        """
+        set the py_method def, what gets put into
+        the module definition structure
+        """
+        if self._args is None:
+            self['method_args_type'] = 'METH_NOARGS'
+        else:
+            self['method_args_type'] = 'METH_VARARGS'
+
+        self['py_method_def'] = _py_method_def_template % self
+
     def _set_parse_tuple_call(self):
         """
         set the PyArg_ParseTuple call if needed
@@ -102,15 +137,6 @@ class FuncWrapper(dict):
             self._parse_tuple_call=None
         else:
             self._parse_tuple_call = _parse_tuple_template % self._args
-
-    def _set_wrapper_funcdef(self):
-        """
-        Set the wrapper function definition
-        """
-        self._wrapper_funcdef = _wrapper_funcdef_template % dict(
-            prefix=self['prefix'],
-            func_wrapper_name=self._funcdef['func_wrapper_name'],
-        )
 
     def _set_function_call(self):
         """
@@ -121,11 +147,11 @@ class FuncWrapper(dict):
         else:
             fargs=self._args['function_args']
         fcall='%s( %s );' % (
-            self._funcdef['func_name'],
+            self['func_name'],
             fargs,
         )
 
-        rname=self._funcdef['return_var_name']
+        rname=self['return_var_name']
         if rname is not None:
             fcall = '%s = %s' % (rname, fcall)
 
@@ -133,9 +159,9 @@ class FuncWrapper(dict):
 
            
     def __repr__(self):
-        return self._text
+        return self.get_text()
 
-class FuncDef(dict):
+class FuncWrapAndReturn(dict):
     """
     extract information about the wrapped function
     """
@@ -176,6 +202,7 @@ class FuncDef(dict):
             self['return_call']='    return Py_BuildValue("%s", %s);' % \
                     (pytype, self['return_var_name'])
  
+
 class Arguments(dict):
     """
     information for wrapping function arguments
@@ -375,6 +402,9 @@ def get_wrap_type(type):
 
 
 _wrapper_funcdef_template='PyObject* %(func_wrapper_name)s(PyObject* self, PyObject* args)'
+
+_py_method_def_template=\
+    '{"%(func_name)s",(PyCFunction)%(func_wrapper_name)s, %(method_args_type)s, "%(doc)s"}'
 
 
 _parse_tuple_template="""
