@@ -205,14 +205,14 @@ class FuncWrapAndReturn(dict):
                     (py_format, self['return_var_name'])
  
 
-_wrapper_funcdef_template='PyObject* %(func_wrapper_name)s(PyObject* self, PyObject* args)'
+_wrapper_funcdef_template='PyObject* %(func_wrapper_name)s(PyObject* self_pyobj, PyObject* args_pyobj)'
 
 _py_method_def_template=\
     '{"%(func_name)s",(PyCFunction)%(func_wrapper_name)s, %(method_args_type)s, "%(doc)s"}'
 
 
 _parse_tuple_template="""
-    if (!PyArg_ParseTuple(args, (char*)"%(py_formats)s", 
+    if (!PyArg_ParseTuple(args_pyobj, (char*)"%(py_formats)s", 
                           %(parse_tuple_args)s)) {
         return NULL;
     }"""
