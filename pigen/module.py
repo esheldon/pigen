@@ -22,7 +22,7 @@ class ModuleWrapper(dict):
         """
         write the module to the specified file
         """
-        with open(fname,'rw') as fobj:
+        with open(fname,'w') as fobj:
             fobj.write(self._text)
 
     def get_text(self):
