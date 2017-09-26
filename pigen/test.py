@@ -8,8 +8,8 @@ def test(prefix_var_names=False):
         'prefix_var_names':prefix_var_names,
 
         'includes':[
-            '#include gmix.h',
-            '#include fitting.h',
+            '#include "gmix.h"',
+            '#include "fitting.h"',
         ],
 
         'functions': [
