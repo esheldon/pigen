@@ -36,7 +36,7 @@ is found.
 - No memory allocation is allowed in the wrapper except by the use
   of Py_BuildValue for scalar return values.
 - Scalar inputs are translated directly to c types. This includes
-  strings, but only as const char *.
+  strings, but only as `const char *`.
 - Pointer inputs are assumed to represent numpy arrays, and the
   underlying pointer is extracted using PyArray_DATA.  It is
   checked that the input is a numpy array.  No array type or shape
@@ -70,6 +70,8 @@ functions:
   - def: double dsum(double * y, size_t ny)
     doc: func returns double, takes array and array size
 
+  # const char* strings are supported but not string arrays
+  - void pstring(const char * string)
 
   # docs are optional
   - def: double dscalar(void)
@@ -94,6 +96,3 @@ functions:
       All types are declared as PyObjects*. The user is responsible
       for using the python api.
 ```
-TODO
--------
-- support strings char * using const char * as the type

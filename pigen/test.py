@@ -23,6 +23,8 @@ def test(prefix_var_names=False):
 
             'double fdouble(double * y, size_t ny);',
 
+            'void pstring(const char * string)',
+
             {'def':'void fill_fdiff(struct gauss* gmix, long n_gauss, double *fdiff, long n_fdiff);',
              'doc':'unpack user define struct array and double array'},
 

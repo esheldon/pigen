@@ -31,7 +31,7 @@ class Argument(dict):
             self['py_format'] = 'O'
             self._do_unwrap=False
 
-        elif '*' in self['type']:
+        elif '*' in self['type'] and 'char' not in self['type']:
             self['parse_tuple_argtype'] = 'PyObject*'
 
             self['wrap_name'] = '%s_wrap' % self['name']
@@ -41,6 +41,7 @@ class Argument(dict):
             self._do_unwrap=True
 
         else:
+            # a scalar
             self['parse_tuple_argtype'] = util.get_wrap_type(self['type'])
 
             self['wrap_name'] = self['name']

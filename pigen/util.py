@@ -34,8 +34,12 @@ def get_wrap_type(type):
     demand these are passed by value to the underlying function, we expect the
     conversion to be ok
     """
+    if 'char' in type:
+        return 'const char*'
+
     if type not in _wrap_type_map:
         raise ValueError("don't know how to wrap type: '%s'" % type)
+
     return _wrap_type_map[type]
 
 
@@ -68,7 +72,9 @@ def get_py_format_code(type):
     get the python format code for conversions, e.g.
     used by PyBuild_Value
     """
-    if '*' in type:
+    if 'char' in type:
+        return 's'
+    elif '*' in type:
         return 'O'
     else:
         if type not in _pytype_map:
