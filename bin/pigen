@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+"""
+generate a python interface, given the input description yaml file
+"""
+import pigen
+from argparse import ArgumentParser
+
+parser=ArgumentParser()
+parser.add_argument('description_file',
+                    help='pigen yaml description file')
+parser.add_argument('output_file',
+                    help='output file path for the python/C wrapper file')
+
+def main():
+    args=parser.parse_args()
+
+    module=pigen.module.ModuleWrapper(args.description_file)
+    module.write(args.output_file)
+
+if __name__=="__main__":
+    main()
