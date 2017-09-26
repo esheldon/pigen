@@ -1,4 +1,6 @@
 from __future__ import print_function, absolute_import
+from .arguments import Argument, Arguments
+from . import util
 
 class FuncWrapper(dict):
     """
@@ -169,7 +171,7 @@ class FuncWrapAndReturn(dict):
         if '*' in front and 'PyObject' not in front:
             raise RuntimeError("pointer return not supported, except PyObject*")
 
-        self['return_type'], self['func_name'] = get_type_and_name(front)
+        self['return_type'], self['func_name'] = util.get_type_and_name(front)
         self['func_wrapper_name'] = '%s_%s' % (prefix, self['func_name'])
         self['wrapper_funcdef'] = _wrapper_funcdef_template % self
 
@@ -198,208 +200,10 @@ class FuncWrapAndReturn(dict):
         elif 'PyObject' in self['return_type']:
             self['return_call']='    return %s;' % self['return_var_name']
         else:
-            pytype = get_pytype(self['return_type'])
+            py_format = util.get_py_format_code(self['return_type'])
             self['return_call']='    return Py_BuildValue("%s", %s);' % \
-                    (pytype, self['return_var_name'])
+                    (py_format, self['return_var_name'])
  
-
-class Arguments(dict):
-    """
-    information for wrapping function arguments
-    """
-    def __init__(self, arglist, prefix=None):
-        self._arglist=arglist
-        self['prefix']=prefix
-
-        self._args = [Argument(a,prefix) for a in arglist]
-
-        self._set_pytype_string()
-        self._set_unwraps()
-        self._set_wrap_declarations()
-        self._set_declarations()
-        self._set_parse_tuple_args()
-        self._set_function_args()
-
-    def _set_pytype_string(self):
-        """
-        combined python type formats
-        """
-        slist = [a['pytype'] for a in self._args]
-        self['pytypes'] = ''.join(slist)
-
-    def _set_unwraps(self):
-        """
-        combined unwrap code
-        """
-        uwlist=[a['unwrap_code'] for a in self._args if a['unwrap_code'] is not None]
-        if len(uwlist) == 0:
-            self['unwraps']=None
-        else:
-            self['unwraps'] = '\n'.join(uwlist)
-
-    def _set_wrap_declarations(self):
-        """
-        combined wrap declarations
-        """
-        dlist=[a['wrap_declaration'] for a in self._args
-               if a['wrap_declaration'] is not None]
-
-        if len(dlist) > 0:
-            self['wrap_declarations'] = '\n'.join(dlist)
-        else:
-            self['wrap_declarations'] = None
-
-    def _set_declarations(self):
-        """
-        combined wrap declarations
-        """
-        dlist=[a['declaration'] for a in self._args
-               if a['declaration'] is not None]
-        if len(dlist) == 0:
-            self['declarations'] = None
-        else:
-            self['declarations'] = '\n'.join(dlist)
-
-
-    def _set_parse_tuple_args(self):
-        """
-        the combined args for PyArg_ParseTuple
-        """
-        args=[a['parse_tuple_arg'] for a in self._args]
-        self['parse_tuple_args']=', '.join(args)
-
-    def _set_function_args(self):
-        """
-        the combined args to the wrapped function
-        """
-        args=[a['name'] for a in self._args]
-        self['function_args'] = ', '.join(args)
-
-class Argument(dict):
-    """
-    Get information for wrapping a function argument
-    """
-    def __init__(self, argdef, prefix=None):
-        self._argdef=argdef
-        self['prefix'] = prefix
-        self['type'], name = get_type_and_name(argdef)
-
-        if self['prefix'] is not None:
-            self['name'] = '%s_%s' % (prefix, name)
-        else:
-            self['name'] = name
-
-        self._set_wrapper_info()
-        self._set_unwrap_code()
-
-    def _set_wrapper_info(self):
-        """
-        set the basic wrapper info
-        """
-        if 'PyObject' in self['type']:
-
-            self['parse_tuple_argtype'] = 'PyObject*'
-
-            self['wrap_name'] = self['name']
-            self['wrapper_type'] = 'PyObject*'
-
-            self['pytype'] = 'O'
-            self._do_unwrap=False
-
-        elif '*' in self['type']:
-            self['parse_tuple_argtype'] = 'PyObject*'
-
-            self['wrap_name'] = '%s_wrap' % self['name']
-            self['wrapper_type'] = self['type']
-
-            self['pytype'] = 'O'
-            self._do_unwrap=True
-
-        else:
-            self['parse_tuple_argtype'] = get_wrap_type(self['type'])
-
-            self['wrap_name'] = self['name']
-            self['wrapper_type'] = self['parse_tuple_argtype']
-
-            self['pytype'] = get_pytype(self['wrapper_type'])
-            self._do_unwrap=False
-
-        self['parse_tuple_arg'] = '&%s' % self['wrap_name']
-
-
-        tup=(self['wrapper_type'],self['name'])
-        self['declaration'] = '    %s %s;' % tup
-
-        if self._do_unwrap:
-            tup=(self['parse_tuple_argtype'], self['wrap_name'])
-            self['wrap_declaration'] = '    %s %s;' % tup
-
-        else:
-            self['wrap_declaration'] = None
-
-    def _set_unwrap_code(self):
-        """
-        set the unwrap code, if needed
-        """
-        if self._do_unwrap:
-            c='    %(name)s = (%(type)s) PyArray_DATA( (PyArrayObject*) %(wrap_name)s );'
-            c = c % self
-        else:
-            c=None
-
-        self['unwrap_code'] = c
-
-
-
-def get_type_and_name(d):
-    """
-    extract type and variable name
-
-    parameters
-    ----------
-    cdef: string
-        e.g.
-          int x
-          double *y
-    
-    returns:
-        type, name
-    """
-    if '*' in d:
-        split=d.split('*')
-        type = split[0].strip() + '*'
-        name = split[1].strip()
-    else:
-        split=d.split(' ')
-        type = split[0].strip()
-        name = split[1].strip()
-
-    return type, name
-
-def get_pytype(type):
-    """
-    get the python format code for conversions, e.g.
-    used by PyBuild_Value
-    """
-    if '*' in type:
-        return 'O'
-    else:
-        if type not in _pytype_map:
-            raise ValueError("don't know parse tuple string for type: '%s'" % type)
-        return _pytype_map[type]
-
-def get_wrap_type(type):
-    """
-    get a type for wrapping.  E.g. if the user has type int, this will
-    be wrapped by int. But for size_t there is no direct mapping, so
-    we choose unsigned long long
-    """
-    if type not in _wrap_type_map:
-        raise ValueError("don't know how to wrap type: '%s'" % type)
-    return _wrap_type_map[type]
-
-
-
 
 _wrapper_funcdef_template='PyObject* %(func_wrapper_name)s(PyObject* self, PyObject* args)'
 
@@ -408,58 +212,10 @@ _py_method_def_template=\
 
 
 _parse_tuple_template="""
-    if (!PyArg_ParseTuple(args, (char*)"%(pytypes)s", 
+    if (!PyArg_ParseTuple(args, (char*)"%(py_formats)s", 
                           %(parse_tuple_args)s)) {
         return NULL;
     }"""
 
-# this is a way to map types to something that python
-# knows about.  Since we demand these are passed by
-# value to the underlying function, we expect the
-# conversion to be ok
 
-_wrap_type_map={
-    'double':'double',
-    'float':'float',
-
-    'short':'short int',
-    'short int ':'short int',
-    'unsigned short':'unsigned short int',
-    'unsigned short int ':'unsigned short int',
-
-    'int':'int',
-    'unsigned int':'insigned int',
-
-    'long':'long',
-    'long int':'long',
-    'unsigned long':'unsigned long',
-    'unsigned long int':'unsigned long',
-
-    'long long':'long long',
-
-    'ssize_t':'long long',
-    'size_t':'unsigned long long',
-}
-
-# the codes for type conversions, e.g. for Py_BuildValue or
-# for parse tuple
-_pytype_map={
-    'double':'d',
-    'float':'d',
-
-    'short':'h',
-    'short int':'h',
-    'unsigned short':'H',
-    'unsigned short int':'H',
-
-    'int':'i',
-    'unsigned int':'I',
-
-    'long':'l',
-    'long int':'l',
-    'unsigned long':'k',
-    'unsigned long int':'k',
-
-    'long long':'L',
-    'unsigned long long':'K',
-}    
+   
