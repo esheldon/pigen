@@ -13,9 +13,7 @@ parser.add_argument('output_file',
 
 def main():
     args=parser.parse_args()
-
-    module=pigen.module.ModuleWrapper(args.description_file)
-    module.write(args.output_file)
+    pigen.module.make_wrapper(args.description_file, args.output_file)
 
 if __name__=="__main__":
     main()

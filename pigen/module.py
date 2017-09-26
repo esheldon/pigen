@@ -2,6 +2,22 @@ from . import config
 from . import funcwrap
 from .version import __version__
 
+def make_wrapper(conf, output_file):
+    """
+    create a python wrapper based on the input description
+    file
+
+    parameters
+    ----------
+    conf: dict or yaml file name
+        Description file
+    output_file: string
+        path to the output file
+    """
+    module=ModuleWrapper(conf)
+    module.write(output_file)
+
+
 class ModuleWrapper(dict):
     """
     module wrapper
@@ -67,6 +83,8 @@ class ModuleWrapper(dict):
         self['all_function_texts'] = '\n\n'.join(texts)
 
         pydefs = ['    '+f.get_py_method_def() for f in funcwraps]
+
+        pydefs += ['{NULL}']
         self['py_method_defs'] = ',\n'.join(pydefs)
 
 
@@ -91,7 +109,6 @@ static PyMethodDef %(modulename)s_py_method_defs [] = {
 
 %(py_method_defs)s
 
-    {NULL}  /* Sentinel */
 };
 
 

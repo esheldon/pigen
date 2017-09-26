@@ -68,13 +68,18 @@ class Argument(dict):
         set the unwrap code, if needed
         """
         if self._do_unwrap:
-            c='    %(name)s = (%(type)s) PyArray_DATA( (PyArrayObject*) %(wrap_name)s );'
-            c = c % self
+            c = _array_unwrap_template % self
         else:
             c=None
 
         self['unwrap_code'] = c
 
+_array_unwrap_template="""    if ( !PyArray_Check(%(wrap_name)s) ) {
+        PyErr_SetString(PyExc_TypeError, "argument %(name)s must be an array");
+        return NULL;
+    }
+    %(name)s = (%(type)s) PyArray_DATA( (PyArrayObject*) %(wrap_name)s );
+"""
 
 
 

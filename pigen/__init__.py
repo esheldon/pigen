@@ -1,8 +1,9 @@
 from . import util
 from . import arguments
 from . import funcwrap
-from . import module
 from . import config
+from . import module
+from .module import make_wrapper, ModuleWrapper
 
 from . import test
 
