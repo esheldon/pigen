@@ -1,3 +1,4 @@
+import os
 import distutils
 from distutils.core import setup
 
