@@ -2,18 +2,23 @@ from __future__ import print_function, absolute_import
 from .arguments import Argument, Arguments
 from . import util
 
-class FuncWrapper(dict):
+class FunctionWrapper(dict):
     """
     function definition wrapper
 
     date a C function declaration and generate the python C 
     api wrapper code for it
     """
-    def __init__(self, funcdef, prefix, prefix_var_names=False):
+    def __init__(self,
+                 funcdef,
+                 prefix,
+                 prefix_var_names=False,
+                 pydef_remove_prefix=None):
 
         self._set_funcdef(funcdef)
         self._prefix=prefix
         self._prefix_var_names=prefix_var_names
+        self._pydef_remove_prefix=pydef_remove_prefix
 
         self._set_defs()
         self._set_py_method_def()
@@ -34,6 +39,17 @@ class FuncWrapper(dict):
         """
         return self['py_method_def']
 
+    def get_args(self):
+        """
+        get a reference to the args
+        """
+        return self._args
+
+    def get_function_call(self):
+        """
+        get ref to the function call
+        """
+        return self._function_call
 
     def _set_funcdef(self, funcdef):
         if isinstance(funcdef, dict):
@@ -129,6 +145,13 @@ class FuncWrapper(dict):
         else:
             self['method_args_type'] = 'METH_VARARGS'
 
+        pydef_func_name = self['func_name']
+        if self._pydef_remove_prefix is not None:
+            rep=self._pydef_remove_prefix
+            lrep=len(rep)
+            if self['func_name'][0:lrep] == rep:
+                pydef_func_name = pydef_func_name[lrep:]
+        self['pydef_func_name'] = pydef_func_name 
         self['py_method_def'] = _py_method_def_template % self
 
     def _set_parse_tuple_call(self):
@@ -208,7 +231,7 @@ class FuncWrapAndReturn(dict):
 _wrapper_funcdef_template='PyObject* %(func_wrapper_name)s(PyObject* self_pyobj, PyObject* args_pyobj)'
 
 _py_method_def_template=\
-    '{"%(func_name)s",(PyCFunction)%(func_wrapper_name)s, %(method_args_type)s, "%(doc)s"}'
+    '{"%(pydef_func_name)s",(PyCFunction)%(func_wrapper_name)s, %(method_args_type)s, "%(doc)s"}'
 
 
 _parse_tuple_template="""

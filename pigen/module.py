@@ -72,7 +72,7 @@ class ModuleWrapper(dict):
         
         funcwraps=[]
         for d in self.conf['functions']:
-            fwrap = funcwrap.FuncWrapper(
+            fwrap = funcwrap.FunctionWrapper(
                 funcdef=d,
                 prefix=self.conf['wrapper_prefix'],
                 prefix_var_names=self.conf['prefix_var_names'],

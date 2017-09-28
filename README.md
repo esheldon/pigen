@@ -33,8 +33,10 @@ Implementation Restrictions
 Some restrictions may be lifted if an easy way to implement a particular case
 is found.
 
-- No memory allocation is allowed in the wrapper except by the use
-  of Py_BuildValue for scalar return values.
+- No memory allocation is performed by the wrapper except by the use
+  of Py_BuildValue for scalar return values. For classes, the user
+  is responsible for memory allocation through the constructor, and
+  python takes care of calling the destructor.
 - Scalar inputs are translated directly to c types. This includes
   strings, but only as `const char *`.
 - Pointer inputs are assumed to represent numpy arrays, and the
@@ -54,7 +56,6 @@ modulename: '_gmix'
 
 includes:
   - gmix.h
-  - point.h
 
 # function defs are either a string with the prototype, or a dict with the
 # prototype in the 'def' entry, and possibly a 'doc' entry for documentation.
@@ -70,23 +71,21 @@ functions:
   - def: double dsum(double * y, size_t ny)
     doc: func returns double, takes array and array size
 
-  # const char* strings are supported but not string arrays
-  - void pstring(const char * string)
-
   # docs are optional
   - def: double dscalar(void)
-
 
   # if there is no doc, a simple string can be used
   - float fscalar(float x);
 
+  # const char* strings are supported but not string arrays
+  - void pstring(const char * string)
 
   # multiline
   - |
-      void fill_fdiff(struct gauss* gmix,
-                      long n_gauss,
-                      double *fdiff,
-                      long n)
+      void add_arrays(double* array1,
+                      size_t n1,
+                      double* array2,
+                      size_t n2)
 
   # multiline within dict
   - def: |
@@ -95,4 +94,28 @@ functions:
     doc: |
       All types are declared as PyObjects*. The user is responsible
       for using the python api.
+
+classes:
+  # this will be available as _gmix.GMix
+  GMix:
+    doc: "class wrapping a gaussian mixture"
+
+    constructor: Gauss* gmix_new(long n_gauss)
+    destructor: void gmix_free(Gauss* gauss)
+
+    # for the wrapper methods, this prefix will be removed
+    # from the method names, so in python we get
+    #     gmix=GMix(1.0, 0.5)
+    #     gmix.eval(0.2)
+    # instead of gmix.gmix_eval(0.2)
+
+    pydef_remove_prefix: "gmix_"
+
+    # methods must take a Gauss* as the first argument
+    methods:
+      - def: void gmix_fill(Gauss* self, double *pars, long n_pars)
+        doc: "fill the gaussian mixture"
+
+      - def: double gmix_eval(const Gauss* self, double x)
+        doc: "evaluate the gaussian mixture"
 ```
