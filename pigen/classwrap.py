@@ -22,6 +22,7 @@ class ClassWrapper(dict):
         self._set_structdef()
         self._set_constructor()
         self._set_destructor()
+        self._set_method_wraps()
         self._set_class_wrapper()
 
         self._set_defs()
@@ -96,11 +97,38 @@ class ClassWrapper(dict):
         self['destructor_call'] = '    %s(self->data);' % wrapper['func_name']
         self._destructor_text = _class_dealloc_template % self
 
+    def _set_method_wraps(self):
+        """
+        get all the method wrappers and the py method
+        definitions
+        """
+        
+        classdef=self._classdef
+
+        method_wraps=[]
+        for d in classdef['methods']:
+            method_wrap = funcwrap.FunctionWrapper(
+                funcdef=d,
+                prefix=self.conf['wrapper_struct_name'],
+                pydef_remove_prefix=classdef['pydef_remove_prefix'],
+            )
+            method_wraps.append(method_wrap)
+
+        texts = [m.get_text() for m in method_wraps]
+        self['all_method_texts'] = '\n\n'.join(texts)
+
+        pydefs = ['    '+m.get_py_method_def() for m in method_wraps]
+
+        pydefs += ['    {NULL}']
+        self['py_method_defs'] = ',\n'.join(pydefs)
+
+
     def _set_class_wrapper(self):
         """
         set the basic structure definition
         """
         self._class_wrapper = _class_wrapper_template % self
+
 
 
 _class_struct_template="""

@@ -67,9 +67,6 @@ class ModuleWrapper(dict):
         get all the function wrappers and the py method
         definitions
         """
-        prefix=self.conf['wrapper_prefix']
-        prefix_vnames=self.conf['prefix_var_names'],
-        
         funcwraps=[]
         for d in self.conf['functions']:
             fwrap = funcwrap.FunctionWrapper(
